@@ -1,0 +1,659 @@
+---
+title: "Thesis -version2"
+author: "Farida Eleshin"
+date: "2/8/2022"
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
+---
+
+
+##IMPORTING DATA SET
+```{r}
+#test data - predictor variables
+test_set_features_flu = read.csv("/Users/macpro/Desktop/Data_/test_set_features_flu.csv", header = T) 
+
+
+#training data - predictor variables
+training_set_features_flu = read.csv("/Users/macpro/Desktop/Data_/training_set_features_flu.csv", header = T)
+
+
+#response variables
+training_set_labels_flu = read.csv("/Users/macpro/Desktop/Data_/training_set_labels_flu.csv", header = T)
+
+```
+
+   
+####Checking for missing values in training dataset dataset
+```{r}
+sapply(training_set_features_flu, function(x)sum(is.na(x)))
+```
+
+#checking for missing values in the test dataset
+```{r}
+sapply(test_set_features_flu, function(x)sum(is.na(x)))
+```
+
+#checking for missing values in the labels dataset
+```{r}
+sapply(training_set_labels_flu, function(x)sum(is.na(x)))
+```
+
+#renaming datasets
+```{r}
+trainingdata<-training_set_features_flu
+testdata <- test_set_features_flu
+response.labels<-training_set_labels_flu
+```
+
+
+##Changing all categorical data to numeric data and creating new columns of them
+```{r}
+trainingdata[is.na(trainingdata)] = 0
+
+trainingdata$age_group <-as.factor(trainingdata$age_group)
+trainingdata$newage <- as.numeric(trainingdata$age_group)
+
+trainingdata$race <-as.factor(trainingdata$race)
+trainingdata$newrace <- as.numeric(trainingdata$race)
+
+trainingdata$education <-as.factor(trainingdata$education)
+trainingdata$neweducation <- as.numeric(trainingdata$education)
+
+trainingdata$sex <-as.factor(trainingdata$sex)
+trainingdata$newsex <- as.numeric(trainingdata$sex)
+
+trainingdata$income_poverty <-as.factor(trainingdata$income_poverty)
+trainingdata$newincome_poverty <- as.numeric(trainingdata$income_poverty)
+
+trainingdata$marital_status <-as.factor(trainingdata$marital_status)
+trainingdata$newmarital_status <- as.numeric(trainingdata$marital_status)
+
+trainingdata$rent_or_own <-as.factor(trainingdata$rent_or_own)
+trainingdata$newrent_or_own <- as.numeric(trainingdata$rent_or_own)
+
+trainingdata$employment_status <-as.factor(trainingdata$employment_status)
+trainingdata$newemployment_status <- as.numeric(trainingdata$employment_status)
+
+trainingdata$hhs_geo_region <-as.factor(trainingdata$hhs_geo_region)
+trainingdata$newhhs_geo_region <- as.numeric(trainingdata$hhs_geo_region)
+
+trainingdata$census_msa <-as.factor(trainingdata$census_msa)
+trainingdata$newcensus_msa <- as.numeric(trainingdata$census_msa)
+
+trainingdata$employment_industry <-as.factor(trainingdata$employment_industry)
+trainingdata$newemployment_industry <- as.numeric(trainingdata$employment_industry)
+
+trainingdata$employment_occupation <-as.factor(trainingdata$employment_occupation)
+trainingdata$newemployment_occupation <- as.numeric(trainingdata$employment_occupation)
+
+
+
+
+```
+#Deleting old categorical variables
+```{r}
+
+trainingdata[, 23:32] <- list(NULL)
+trainingdata[, 35:36] <- list(NULL)
+
+```
+
+##Changing all categorical data to numeric data and creating new columns of them - test data set
+```{r}
+testdata[is.na(testdata)] = 0
+
+testdata$age_group <-as.factor(testdata$age_group)
+testdata$newage <- as.numeric(testdata$age_group)
+
+testdata$race <-as.factor(testdata$race)
+testdata$newrace <- as.numeric(testdata$race)
+
+testdata$education <-as.factor(testdata$education)
+testdata$neweducation <- as.numeric(testdata$education)
+
+testdata$sex <-as.factor(testdata$sex)
+testdata$newsex <- as.numeric(testdata$sex)
+
+testdata$income_poverty <-as.factor(testdata$income_poverty)
+testdata$newincome_poverty <- as.numeric(testdata$income_poverty)
+
+testdata$marital_status <-as.factor(testdata$marital_status)
+testdata$newmarital_status <- as.numeric(testdata$marital_status)
+
+testdata$rent_or_own <-as.factor(testdata$rent_or_own)
+testdata$newrent_or_own <- as.numeric(testdata$rent_or_own)
+
+testdata$employment_status <-as.factor(testdata$employment_status)
+testdata$newemployment_status <- as.numeric(testdata$employment_status)
+
+testdata$hhs_geo_region <-as.factor(testdata$hhs_geo_region)
+testdata$newhhs_geo_region <- as.numeric(testdata$hhs_geo_region)
+
+testdata$census_msa <-as.factor(testdata$census_msa)
+testdata$newcensus_msa <- as.numeric(testdata$census_msa)
+
+testdata$employment_industry <-as.factor(testdata$employment_industry)
+testdata$newemployment_industry <- as.numeric(testdata$employment_industry)
+
+testdata$employment_occupation <-as.factor(testdata$employment_occupation)
+testdata$newemployment_occupation <- as.numeric(testdata$employment_occupation)
+
+```
+
+#Deleting old categorical variables
+```{r}
+
+testdata[, 23:32] <- list(NULL)
+testdata[, 35:36] <- list(NULL)
+
+
+```
+
+# # ##removing duplicated respondent ID numbers
+```{r}
+# # ##removing duplicated ID numbers
+ trainingdata <- trainingdata[!duplicated(trainingdata$respondent_id), ]
+testdata <- testdata[!duplicated(testdata$respondent_id), ]
+testdata[-c(26708), ]
+
+```
+
+##replacing na values with 0
+```{r}
+trainingdata[is.na(trainingdata)]  = 0
+testdata[is.na(testdata)]  = 0
+```
+
+
+#LEAST ABSOLUTE SHRINKAGE AND SELECTION OPERATOR (LASSO) REGRESSION AS A PREDICTION MODEL 
+```{r}
+#H1N1 VACCINE AS THE RESPONSE VARIABLE
+
+#install.packages(glmnet)
+
+#loading package glmnet
+library(glmnet)
+
+#assigning x to the training data and y to h1n1_vaccine in the response labels
+x.h1n1<-trainingdata
+y.h1n1 <- response.labels$h1n1_vaccine
+
+#fitting the first lasso model 
+fit<-glmnet(x.h1n1,y.h1n1)
+
+#Visualizing the coefficients
+plot(fit)
+#CV =cv.glmnet(x,y)
+```
+
+```{r}
+print(fit)
+
+```
+
+#Making predictions on the test data using the first lasso model generated
+```{r}
+#Making predictions  
+set.seed(101)
+test.data.matrix <- data.matrix(testdata)
+lasso.predictions <-predict(fit, newx = test.data.matrix, s =1.0)
+
+#printing the first 20
+head(lasso.predictions)
+```
+At this specific lambda, the probability that everyone has taken h1n1 is the same. Which doesn't explain the individual different probability we need so we do a cross validation
+
+######Cross Validation
+```{r}
+x2.h1n1 <-data.matrix(trainingdata)
+cvfit <- cv.glmnet(x2.h1n1, y.h1n1, family = "binomial", type.measure = "auc", 
+                  keep = TRUE)
+plot(cvfit)
+```
+
+
+```{r}
+#the minimum lambda - lambda.min returns the value of lambda that gives minimum mean cross-validated error.
+cvfit$lambda.min
+
+```
+
+
+
+####Finding the coefficient of lambda 1se - most regularised model
+```{r}
+cvfit$lambda.1se
+coef(cvfit, s = "lambda.1se")
+```
+
+#Predicting the probabilities of the varibles on h1n1 vaccine using lambda.lse, which gives the most regularized model such that error is within one standard error of the minimum.
+```{r}
+#lambda.lse, which gives the most regularized model such that error is within one standard error of the minimum.
+lasso.bestpred <- predict(cvfit, newx = test.data.matrix, s = "lambda.1se")
+head(lasso.bestpred)
+```
+
+
+#Assessing using the confusion matrix
+```{r}
+cnf <- confusion.glmnet(cvfit, newx = x2.h1n1, newy = y.h1n1)
+print(cnf)
+```
+#Assessing using the ROC curve
+```{r}
+rocs <- roc.glmnet(cvfit$fit.preval, newy = y.h1n1)
+best <- cvfit$index["min",]
+plot(rocs[[best]], type = "l")
+invisible(sapply(rocs, lines, col="grey"))
+lines(rocs[[best]], lwd = 2,col = "red")
+```
+
+#SEASONAL VACCINE - LASSO REGRESSION
+#Training the data for seasonal vaccine
+```{r}
+#install.packages(glmnet)
+library(glmnet)
+
+x.seasonal.vaccine<-trainingdata
+y.seasonal.vaccine <- response.labels$seasonal_vaccine
+
+fit<-glmnet(x.seasonal.vaccine,y.seasonal.vaccine)
+plot(fit)
+#print(fit)
+
+
+```
+
+#Making predictions using the test data
+```{r}
+#Making predictions at the specific lambda 
+set.seed(101)
+nx <- data.matrix(testdata)
+pred <-predict(fit, newx = nx, s =1.0)
+
+#printing the first 20
+head(pred)
+```
+
+
+######Cross Validation
+```{r}
+x.seasonal.vaccine.data.matrix <-data.matrix(trainingdata)
+cvfit <- cv.glmnet(x.seasonal.vaccine.data.matrix, y.seasonal.vaccine,family = "binomial", type.measure = "auc", 
+                  keep = TRUE)
+plot(cvfit)
+```
+
+
+#VIWEING THE SELECTED LAMBDAS AND THEIR CORRESPONDING COEEFICIENTS
+```{r}
+#the minimum lambda - lambda.min returns the value of lambda that gives minimum mean cross-validated error.
+cvfit$lambda.min
+```
+
+
+####Finding the coefficient of lambda lse
+```{r}
+cvfit$lambda.1se
+coef(cvfit, s = "lambda.1se")
+```
+
+#Predicting the probabilities of the varibles on seasonal vaccine using lambda.lse, which gives the most regularized model such that error is within one standard error of the minimum.
+```{r}
+#lambda.lse, which gives the most regularized model such that error is within one standard error of the minimum.
+x.seasonal.vaccine.testdata.data.matrix<-data.matrix(testdata)
+bestpred <- predict(cvfit, newx = x.seasonal.vaccine.testdata.data.matrix, s = "lambda.1se")
+head(bestpred)
+```
+
+#Assessing using the confusion matrix
+```{r}
+cnf <- confusion.glmnet(cvfit, newx = x2.h1n1, newy = y.seasonal.vaccine)
+print(cnf)
+```
+
+#Assessing using the roc curve
+```{r}
+rocs <- roc.glmnet(cvfit$fit.preval, newy = y.seasonal.vaccine)
+best <- cvfit$index["min",]
+plot(rocs[[best]], type = "l")
+invisible(sapply(rocs, lines, col="grey"))
+lines(rocs[[best]], lwd = 2,col = "red")
+```
+
+
+#ARTIFICIAL NEURAL NETWORK AS A PREDICTION MODEL 
+```{r}
+#install.packages("neuralnet")
+
+```
+
+#H1N1 ANN MODEL
+
+##training data set
+```{r}
+#training <-trainingdata
+#test <- testdata
+
+df=data.frame(trainingdata,response.labels$h1n1_vaccine)
+head(df,5)
+
+# h1n1<-training_set_labels_flu$h1n1_vaccine
+```
+
+##Creating the neural network
+```{r}
+# load library
+require(neuralnet)
+
+
+# fit neural network
+nn = neuralnet(response.labels.h1n1_vaccine~h1n1_concern+h1n1_knowledge+`behavioral_antiviral_meds`+`behavioral_avoidance`+`behavioral_face_mask`+`behavioral_wash_hands`+`behavioral_large_gatherings`+`behavioral_outside_home`+`behavioral_touch_face`+`doctor_recc_h1n1`+`doctor_recc_seasonal`+`chronic_med_condition`+`child_under_6_months`+`health_worker`+`health_insurance`+`opinion_h1n1_vacc_effective`+`opinion_h1n1_risk`+`opinion_h1n1_sick_from_vacc`+`opinion_seas_vacc_effective`+`opinion_seas_risk`+`opinion_seas_sick_from_vacc`+`newage`+`newrace`+`neweducation`+`newsex`+`newincome_poverty`+`newmarital_status`+`newrent_or_own`+`newemployment_status`+`newemployment_industry`+`newemployment_occupation`,data=df, hidden=1,act.fct = "logistic",
+                linear.output = FALSE)
+plot(nn)
+
+nn$result.matrix
+
+
+
+```
+
+
+```{r}
+## Prediction using neural network
+#testdata<-testdata[-c(2),]
+#test <- testdata
+#testdata[is.na(testdata)]  = 0
+
+
+
+print("Probabilties that each each respondent took an h1n1 vaccine")
+nn.h1n1.predictions<-predict (nn,testdata)
+head(nn.h1n1.predictions,5)
+
+
+print("H1n1 probabilties converted into binary")
+nn.binary <- ifelse(nn.h1n1.predictions>0.5, 1, 0)
+head(nn.binary,10)
+```
+
+#Cross validation of the neuralnetwork
+```{r}
+#library(caret)
+#nn.binary<-nn.binary[-c(2),]
+#nn.binarydf<-data.frame(nn.binary,df$response.labels.h1n1_vaccine)
+#attach(nn.binarydf)
+table(nn.binarydf)
+conf <-(18042+823)/(18042+4851+ 2991+823)
+conf
+
+```
+
+
+###FOR SEASONAL VACCINE - ANN MODEL 
+```{r}
+#training <-trainingdata
+#test <- testdata
+#training[is.na(training)] = 0
+
+
+
+df1=data.frame(trainingdata,response.labels$seasonal_vaccine)
+#head(df,20)
+
+require(neuralnet)
+
+
+
+nn = neuralnet(response.labels.seasonal_vaccine~h1n1_concern+h1n1_knowledge+`behavioral_antiviral_meds`+`behavioral_avoidance`+`behavioral_face_mask`+`behavioral_wash_hands`+`behavioral_large_gatherings`+`behavioral_outside_home`+`behavioral_touch_face`+`doctor_recc_h1n1`+`doctor_recc_seasonal`+`chronic_med_condition`+`child_under_6_months`+`health_worker`+`health_insurance`+`opinion_h1n1_vacc_effective`+`opinion_h1n1_risk`+`opinion_h1n1_sick_from_vacc`+`opinion_seas_vacc_effective`+`opinion_seas_risk`+`opinion_seas_sick_from_vacc`+`newage`+`newrace`+`neweducation`+`newsex`+`newincome_poverty`+`newmarital_status`+`newrent_or_own`+`newemployment_status`+`newemployment_industry`+`newemployment_occupation`,data=df1, hidden=1,act.fct = "logistic",
+ 
+                             linear.output = FALSE)
+
+#plotting the neural network 
+plot(nn)
+nn$result.matrix
+
+#changing all na values to na
+#test[is.na(test)]  = 0
+
+#predict using test data
+nn.seasonalvaccine.predictions<-predict (nn,testdata)
+
+print("H1n1 probabilties converted into binary")
+nn.sv.binary <- ifelse(nn.seasonalvaccine.predictions>0.5, 1, 0)
+head(nn.sv.binary,10)
+
+```
+
+
+
+```{r}
+nn.sv.binary<-nn.sv.binary[-c(2),]
+nn.sv.binarydf <-data.frame(nn.sv.binary,response.labels$seasonal_vaccine)
+attach(nn.sv.binarydf)
+table(nn.sv.binarydf)
+conf.ss<-(8157+5490)/(8157+5490+6115+6945)
+conf.ss
+```
+
+#XGBOOST 
+```{r}
+library(xgboost)
+library(caTools)
+library(dplyr)
+#library(caret)
+
+testdata<-testdata[-c(2),]
+
+###data
+xgb_train <- xgb.DMatrix(data = data.matrix(trainingdata), label =df$response.labels.h1n1_vaccine )
+xgb_test <- xgb.DMatrix(data = data.matrix(testdata), label = df$response.labels.h1n1_vaccine)
+
+set.seed(42)
+xgb_params <- list(
+  booster = "gbtree",
+  eta = 0.01,
+  max_depth = 8,
+  gamma = 4,
+  subsample = 0.75,
+  colsample_bytree = 1,
+  objective = "binary:logistic",
+  eval_metric = "auc",
+  num_class = 0
+)
+
+
+xgb_model <- xgb.train(
+  params = xgb_params,
+  data = xgb_train,
+  nrounds = 5000,
+  verbose = 1
+)
+xgb_model
+
+xgb_preds <- predict(xgb_model, data.matrix(testdata))
+xgb_preds <- data.frame(xgb_preds)
+#colnames(xgb_preds) <- levels(response.labels$h1n1_vaccine)
+xgb_preds
+
+
+```
+
+
+```{r}
+library(caret)
+xgb_preds.bn <- ifelse(xgb_preds>0.5, 1, 0)
+#xgb_preds.bn
+accuracy <- sum(xgb_preds.bn == df$response.labels.h1n1_vaccine) / nrow(xgb_preds.bn)
+accuracy
+
+confusionMatrix(factor(xgb_preds.bn), factor(df$response.labels.h1n1_vaccine))
+
+
+```
+#XGBOOST SEASONAL VACCINE
+```{r}
+library(xgboost)
+library(caTools)
+library(dplyr)
+library(caret)
+
+xgb_train <- xgb.DMatrix(data = data.matrix(trainingdata), label =df1$response.labels.seasonal_vaccine )
+xgb_test <- xgb.DMatrix(data = data.matrix(testdata), label = df1$response.labels.seasonal_vaccine)
+
+set.seed(42)
+xgb_params <- list(
+  booster = "gbtree",
+  eta = 0.01,
+  max_depth = 8,
+  gamma = 4,
+  subsample = 0.75,
+  colsample_bytree = 1,
+  objective = "binary:logistic",
+  eval_metric = "auc",
+  num_class = 0
+)
+
+
+xgb_model <- xgb.train(
+  params = xgb_params,
+  data = xgb_train,
+  nrounds = 5000,
+  verbose = 1
+)
+xgb_model
+
+xgb_preds <- predict(xgb_model, data.matrix(testdata))
+xgb_preds <- data.frame(xgb_preds)
+xgb_preds
+
+xgb_preds.bn <- ifelse(xgb_preds>0.5, 1, 0)
+#xgb_preds.bn
+accuracy <- sum(xgb_preds.bn == df1$response.labels.seasonal_vaccine) / nrow(xgb_preds.bn)
+accuracy
+
+confusionMatrix(factor(xgb_preds.bn), factor(df1$response.labels.seasonal_vaccine))
+
+```
+
+
+
+#GRADIENT BOOSTING MACHINE
+```{r}
+library(caret)        
+library(scales)
+library(tidyverse)
+library(gbm)
+library(Metrics)
+library(here)
+
+#trainingdata[, 25] <- list(NULL)
+# trainingdata[, 26] <- list(NULL)
+#testdata[, 25] <- list(NULL)
+# testdata[, 26] <- list(NULL)
+```
+
+
+```{r}
+Boston.boost.h1n1=gbm(response.labels$h1n1_vaccine ~ . ,data = trainingdata,distribution = "gaussian",n.trees = 10000,
+                  shrinkage = 0.01, interaction.depth = 4)
+Boston.boost.h1n1
+
+summary(Boston.boost.h1n1) #Summary gives a table of Variable Importance and a plot of Variable Importance
+```
+```{r}
+#Plot of Response variable with doctor_recc_h1n1
+plot(Boston.boost.h1n1,i="doctor_recc_h1n1") 
+
+
+plot(Boston.boost.h1n1,i="health_insurance") 
+
+```
+```{r}
+cor(trainingdata$doctor_recc_h1n1,response.labels$h1n1_vaccine)#negetive correlation coeff-r
+
+cor(trainingdata$health_insurance,response.labels$h1n1_vaccine)#positive correlation coeff-r
+```
+
+```{r}
+n.trees = seq(from=100,to=10000,by=100) #no of trees-a vector of 100 values 
+
+#Generating a Prediction matrix for each Tree
+predmatrix<-predict(Boston.boost.h1n1,testdata,n.trees=n.trees)
+dim(predmatrix) #dimensions of the Prediction Matrix 
+
+#Calculating The Mean squared Test Error
+test.error<-with(testdata,apply( (predmatrix-response.labels$h1n1_vaccine)^2,2,mean))
+head(test.error) #contains the Mean squared test error for each of the 100 trees averaged
+
+#Plotting the test error vs number of trees
+
+plot(n.trees , test.error , pch=19,col="blue",xlab="Number of Trees",ylab="Test Error", main = "Perfomance of Boosting on Test Set")
+
+#adding the RandomForests Minimum Error line trained on same data and similar parameters
+abline(h = min(test.error),col="red") #test.err is the test error of a Random forest fitted on same data
+legend("topright",c("Minimum Test error Line for Random Forests"),col="red",lty=1,lwd=1)
+```
+```{r}
+#predtrial<-predmatrix
+#newms<-predtrial[, 4:100] <- list(NULL)
+#gbm.binary<-ifelse(predmatrix>0.5, 1, 0)
+# conf.h<-confusionMatrix(factor(gbm.binary), factor(response.labels$h1n1_vaccine)) 
+# conf.h
+accuracy.gbm <- sum(gbm.binary == df$response.labels.h1n1_vaccine) / nrow(gbm.binary)
+accuracy.gbm
+
+```
+
+#GBM FOR SEASONAL VACCINE
+```{r}
+library(caret)        
+library(scales)
+library(tidyverse)
+library(gbm)
+library(Metrics)
+library(here)
+
+Boston.boost.sv=gbm(response.labels$seasonal_vaccine ~ . ,data = trainingdata,distribution = "gaussian",n.trees = 10000,
+                  shrinkage = 0.01, interaction.depth = 4)
+Boston.boost.sv
+
+summary(Boston.boost.sv) 
+
+#Plot of Response variable with doctor_recc_h1n1
+plot(Boston.boost.sv,i="doctor_recc_h1n1") 
+#Inverse relation with lstat variable
+
+plot(Boston.boost.sv,i="health_insurance") 
+#as the average number of rooms increases the the price increases
+
+cor(trainingdata$doctor_recc_h1n1,response.labels$seasonal_vaccine)#negetive correlation coeff-r
+cor(trainingdata$health_insurance,response.labels$seasonal_vaccine)#positive correlation coeff-r
+
+n.trees = seq(from=100,to=10000,by=100) #no of trees-a vector of 100 values 
+
+#Generating a Prediction matrix for each Tree
+predmatrix<-predict(Boston.boost.sv,testdata,n.trees=n.trees)
+dim(predmatrix) #dimensions of the Prediction Matrix 
+
+#Calculating The Mean squared Test Error
+test.error<-with(testdata,apply( (predmatrix-response.labels$seasonal_vaccine)^2,2,mean))
+head(test.error) #contains the Mean squared test error for each of the 100 trees averaged
+
+#Plotting the test error vs number of trees
+
+plot(n.trees , test.error , pch=19,col="blue",xlab="Number of Trees",ylab="Test Error", main = "Perfomance of Boosting on Test Set")
+
+#adding the RandomForests Minimum Error line trained on same data and similar parameters
+abline(h = min(test.error),col="red") #test.err is the test error of a Random forest fitted on same data
+legend("topright",c("Minimum Test error Line for Random Forests"),col="red",lty=1,lwd=1)
+
+gbm.binary.sv<-ifelse(predmatrix>0.5, 1, 0)
+
+accuracy.gbm <- sum(gbm.binary.sv == response.labels$seasonal_vaccine) / nrow(gbm.binary.sv)
+accuracy.gbm
+```
+
+
