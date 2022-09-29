@@ -11,9 +11,9 @@ based on their background information
 4. Gradient Boosting Machine 
 
 #Results
- This research aimed to investigate whether background information of a person could determine if the person 
- would be vaccine-hesitant and has proven that a person's background information is avital factor in deciding 
- the vaccine hesitancy rate.In  exploring  thisidea,  this  research  used  Machine  learning algorithms  such 
- as  the LASSO,  ANN,  XGBoost,  and  the  GBM  models  to  predict  the  vaccine  hesitancy  of  people.While
- all these modelsproved the objective behind the research, the  LASSOmodel had the highest accuracy of 84.52%
- and 77.07% on H1N1 and seasonal vaccines,respectively.
+This research aimed to investigate whether background information of a person could determine if the person 
+would be vaccine-hesitant and has proven that a person's background information is avital factor in deciding 
+the vaccine hesitancy rate.In  exploring  thisidea,  this  research  used  Machine  learning algorithms  such 
+as  the LASSO,  ANN,  XGBoost,  and  the  GBM  models  to  predict  the  vaccine  hesitancy  of  people.While
+all these modelsproved the objective behind the research, the  LASSOmodel had the highest accuracy of 84.52%
+and 77.07% on H1N1 and seasonal vaccines,respectively.
